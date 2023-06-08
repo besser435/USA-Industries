@@ -1,5 +1,5 @@
-print(
-    "brandonusa's Stats: \n"
+"""print(
+    "brandonusa"s Stats: \n"
     "Currently farming: Yes \n"
     "Current balance: $morbillion \n"
     "Average hourly gain: $220,000 \n"
@@ -14,6 +14,7 @@ print(
     "\nGeneral info: \n"
     "Total money: $morbillion \n"
     "Average (or mean?) money gain/h: $440,000 \n"
+    "Estimated time until $1 billion: 3d \n"
 )
 
 print(
@@ -31,4 +32,30 @@ print(
 
     "Database size: 69MB \n"
     "Uptime since restart: 1d 13h 3m \n"
-)
+)"""
+
+from flask import Flask, request
+
+app = Flask(__name__)
+
+# Global kill flag variable
+kill_flag = False
+
+@app.route("/")
+def hello():
+    return "Homepage"
+
+@app.route("/killflag", methods=["GET"])
+def get_kill_flag():
+    global kill_flag
+    return str(kill_flag)
+
+@app.route("/killflag", methods=["POST"])
+def update_kill_flag():
+    global kill_flag
+    kill_flag = request.json.get("kill_flag")
+    return "Kill flag updated successfully."
+
+if __name__ == "__main__":
+    app.run(debug=True, port=5000, host="0.0.0.0")
+
