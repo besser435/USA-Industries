@@ -1,4 +1,4 @@
-import time, pydirectinput, mouse, keyboard, pytesseract, pytesseract, tempfile, os, getpass#,pyautogui
+import time, pydirectinput, mouse, keyboard, pytesseract, tempfile, os, getpass#,pyautogui
 from PIL import Image, ImageGrab, ImageEnhance, ImageFilter
 from time import sleep
 # https://learncodebygaming.com/blog/pyautogui-not-working-use-directinput
@@ -7,6 +7,9 @@ from time import sleep
 REFILL_DELAY = 4200
 abort_if_in_chat = ["Thenoobcraft74","ADMIN"]
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+
+
+version = "1 Billion gecs v1.2"
 
 
 def refill_picks():
@@ -101,7 +104,8 @@ def main():
             pydirectinput.mouseDown()
             mouse.wheel(-1)             # cycle through picks in hotbar
             pydirectinput.press("a")    # timeout prevention. Might cause times to be off by a second occasionally
-            
+            pydirectinput.keyDown("tab")
+
             print(
             "Refill in", int(REFILL_DELAY - time_since_refill), "seconds    ",
             "Time elsapsed:", round((time_stamp / 3600), 2), "hours    ",
@@ -113,6 +117,7 @@ def main():
             # if 4000, refills picks every 1.11 hours (about the time a pick lasts)
             if time_since_refill >= REFILL_DELAY:
                 pydirectinput.mouseUp()
+                pydirectinput.keyUp("tab")
                 refill_picks()
                 refill_counter += 1
                 last_refill_time = current_time  
@@ -128,6 +133,7 @@ def main():
           
             if keyboard.is_pressed("f8"):   # F8 to pause
                 pydirectinput.mouseUp()
+                pydirectinput.keyUp("tab")
                 print("Paused. Press F8 to resume")
                 time.sleep(1)
                 while True:
@@ -137,6 +143,7 @@ def main():
 
             if keyboard.is_pressed("f9"):   # F9 to refill
                 pydirectinput.mouseUp()
+                pydirectinput.keyUp("tab")
                 refill_picks()
                 refill_counter += 1
                 last_refill_time = current_time  
@@ -145,6 +152,8 @@ def main():
 
     except KeyboardInterrupt:
         pydirectinput.mouseUp()
+        pydirectinput.keyUp("tab")
+
         print("Done Mining")
         print("Time elapsed:", round((time_stamp / 3600), 2), "hours")
         print("Refilled picks", refill_counter, "times")
