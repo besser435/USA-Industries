@@ -1,15 +1,21 @@
 import time, pydirectinput, mouse, keyboard, pytesseract, tempfile, os, getpass#,pyautogui
+import usa_secrets, requests
+from colorama import init
+init()
+from colorama import Fore
+init(autoreset=True)
 from PIL import Image, ImageGrab, ImageEnhance, ImageFilter
 from time import sleep
 # https://learncodebygaming.com/blog/pyautogui-not-working-use-directinput
 
 # time in seconds before pick refill. 4200 seems to be right for Unbreaking III
 REFILL_DELAY = 4200
-abort_if_in_chat = []
+app_server_ip = usa_secrets.app_server_ip
+abort_if_in_chat = usa_secrets.abort_if_in_chat
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 
-version = "1 billion gecs v1.2.1"
+version = "1 billion gecs v1.3-beta.1"
 
 
 def refill_picks():
@@ -71,17 +77,27 @@ def read_chat():
             pydirectinput.press("f4")       
             pydirectinput.keyUp("alt")
 
-            print("Found abort string:", abort_string)
+            print(Fore.LIGHTRED_EX + "Found abort string:", abort_string, Fore.LIGHTRED_EX + "\nQuit the game")
+            
 
             username = getpass.getuser()
             IMAGE_PATH = f"C:\\Users\\{username}\\Desktop\\abort_condition.png"
             screenshot.save(IMAGE_PATH)
-            print("Screenshot saved to desktop as abort_condition.png")
+            print("Screenshot saved to desktop as abort_condition.png") 
 
-            temp_file.close()   
-            os.remove(temp_file_path) 
+            # Update the kill flag on the USA server
+            try:
+                data = {"kill_flag": True}
+                response = requests.post(app_server_ip + "/killflag", json=data)
+                if response.status_code == 200:
+                    print("Kill flag updated successfully.")
+                else:
+                    print(Fore.LIGHTRED_EX + "Failed to update the kill flag on server. Other users may be affected.")
+            except Exception:
+                print(Fore.LIGHTRED_EX + "Failed to update the kill flag on server. Other users may be affected.")
 
             raise KeyboardInterrupt
+        
     #print("temp path:", temp_file_path)
     #print(text)
     temp_file.close()   
@@ -123,10 +139,21 @@ def main():
                 last_refill_time = current_time  
                 print("Refilled")
             
-            # Don't really want admins finding out about this and nerfing the jobs.
-            # This will DC the player if an admin joins the game so they are less likely to find the machine
+
             read_chat() 
         
+            # Abort if the global kill flag is set to True
+            try:
+                response = requests.get(app_server_ip + "/killflag")
+                kill_flag = response.text
+                if kill_flag != "False": 
+                    print(Fore.LIGHTRED_EX + "Kill flag set to True \nQuit the game")
+                    raise KeyboardInterrupt
+            except Exception:
+                print(Fore.LIGHTRED_EX + "Error connecting to USA Industries server. Will continue, but other users may be affected.")
+                pass
+
+
             if keyboard.is_pressed("f7"):   # F7 to stop
                 raise KeyboardInterrupt
             pydirectinput.failSafeCheck()   # checks if mouse is in top left corner. If so, raises pydirectinput.FailSafeException and stops everything
