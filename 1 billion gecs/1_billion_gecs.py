@@ -3,13 +3,13 @@ from PIL import Image, ImageGrab, ImageEnhance, ImageFilter
 from time import sleep
 # https://learncodebygaming.com/blog/pyautogui-not-working-use-directinput
 
-# time in seconds before pick refill. 4400 seems to be right for Unbreaking III
+# time in seconds before pick refill. 4200 seems to be right for Unbreaking III
 REFILL_DELAY = 4200
-abort_if_in_chat = ["Thenoobcraft74","ADMIN"]
+abort_if_in_chat = []
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 
-version = "1 Billion gecs v1.2"
+version = "1 billion gecs v1.2.1"
 
 
 def refill_picks():
