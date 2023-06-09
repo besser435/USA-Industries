@@ -34,7 +34,7 @@ print(
     "Uptime since restart: 1d 13h 3m \n"
 )"""
 
-from flask import Flask, request
+from flask import Flask, render_template, request
 
 app = Flask(__name__)
 
@@ -43,13 +43,16 @@ kill_flag = False
 
 @app.route("/")
 def hello():
-    return "Homepage"
+    global kill_flag
+    return render_template("home.html", kill_flag=kill_flag)
 
+# get kill flag status
 @app.route("/killflag", methods=["GET"])
 def get_kill_flag():
     global kill_flag
     return str(kill_flag)
 
+# update kill flag status
 @app.route("/killflag", methods=["POST"])
 def update_kill_flag():
     global kill_flag
