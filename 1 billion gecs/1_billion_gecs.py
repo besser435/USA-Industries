@@ -12,11 +12,12 @@ from time import sleep
 REFILL_DELAY = 4200
 app_server_ip = usa_secrets.app_server_ip
 abort_if_in_chat = usa_secrets.abort_if_in_chat
+override_abort = False
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 
-version = "1 billion gecs v1.3-beta.1"
-
+version = "1 billion gecs v1.3-beta.2"
+#TODO add decoy chat messages and random DC delay
 
 def refill_picks():
     # move to the dohickey
@@ -57,6 +58,30 @@ def refill_picks():
 
     sleep(0.5)
 
+    print("Refilled picks")
+
+
+def abort():
+    pydirectinput.mouseUp()
+    pydirectinput.keyUp("tab")
+
+    pydirectinput.keyDown("alt")
+    pydirectinput.press("f4")       
+    pydirectinput.keyUp("alt")
+
+    # Update the kill flag on the USA server
+    try:
+        data = {"kill_flag": True}
+        response = requests.post(app_server_ip + "/killflag", json=data)
+        if response.status_code == 200:
+            print("Kill flag updated successfully.")
+        else:
+            print(Fore.LIGHTRED_EX + "Failed to update the kill flag on server. Other users may be affected.")
+    except Exception:
+        print(Fore.LIGHTRED_EX + "Failed to update the kill flag on server. Other users may be affected.")
+
+    print(Fore.LIGHTRED_EX + "Quit the game")
+
 
 def read_chat():
     # Create a temporary file for the screenshot and save it
@@ -72,32 +97,17 @@ def read_chat():
     # Check if the text contains any of the abort strings
     for abort_string in abort_if_in_chat:
         if abort_string in text:
-            pydirectinput.mouseUp()
-            pydirectinput.keyDown("alt")
-            pydirectinput.press("f4")       
-            pydirectinput.keyUp("alt")
+            if override_abort == False:
+                abort()
 
-            print(Fore.LIGHTRED_EX + "Found abort string:", abort_string, Fore.LIGHTRED_EX + "\nQuit the game")
-            
-
+            print(Fore.LIGHTRED_EX + "Found abort string:", abort_string, Fore.LIGHTRED_EX)
             username = getpass.getuser()
             IMAGE_PATH = f"C:\\Users\\{username}\\Desktop\\abort_condition.png"
             screenshot.save(IMAGE_PATH)
             print("Screenshot saved to desktop as abort_condition.png") 
 
-            # Update the kill flag on the USA server
-            try:
-                data = {"kill_flag": True}
-                response = requests.post(app_server_ip + "/killflag", json=data)
-                if response.status_code == 200:
-                    print("Kill flag updated successfully.")
-                else:
-                    print(Fore.LIGHTRED_EX + "Failed to update the kill flag on server. Other users may be affected.")
-            except Exception:
-                print(Fore.LIGHTRED_EX + "Failed to update the kill flag on server. Other users may be affected.")
-
             raise KeyboardInterrupt
-        
+     
     #print("temp path:", temp_file_path)
     #print(text)
     temp_file.close()   
@@ -105,6 +115,7 @@ def read_chat():
 
 
 def main():
+    global override_abort
     refill_counter = 0
     try:
         print("Starting the money machine in 3 seconds...")
@@ -137,9 +148,7 @@ def main():
                 refill_picks()
                 refill_counter += 1
                 last_refill_time = current_time  
-                print("Refilled")
             
-
             read_chat() 
         
             # Abort if the global kill flag is set to True
@@ -147,7 +156,9 @@ def main():
                 response = requests.get(app_server_ip + "/killflag")
                 kill_flag = response.text
                 if kill_flag != "False": 
-                    print(Fore.LIGHTRED_EX + "Kill flag set to True \nQuit the game")
+                    print(Fore.LIGHTRED_EX + "Kill flag set to True")
+                    if override_abort == False:
+                        abort()
                     raise KeyboardInterrupt
             except Exception:
                 print(Fore.LIGHTRED_EX + "Error connecting to USA Industries server. Will continue, but other users may be affected.")
@@ -174,7 +185,17 @@ def main():
                 refill_picks()
                 refill_counter += 1
                 last_refill_time = current_time  
-                print("Refilled")
+
+            if keyboard.is_pressed("f10"):   # F10 to togggle whether to abort or not
+                if override_abort == False:
+                    print(Fore.YELLOW + "Enabled abort override. Will not close game when abort is triggered.")
+                else:
+                    print(Fore.GREEN + "Disabled abort override. Will close game when abort is triggered.")
+
+                override_abort = not override_abort
+
+            if override_abort:
+                print(Fore.YELLOW + f"WARN: Override abort: {override_abort}")
     
 
     except KeyboardInterrupt:
@@ -182,6 +203,7 @@ def main():
         pydirectinput.keyUp("tab")
 
         print("Done Mining")
+        print("Software version:", version)
         print("Time elapsed:", round((time_stamp / 3600), 2), "hours")
         print("Refilled picks", refill_counter, "times")
         input("\nPress enter to exit...")
