@@ -22,13 +22,17 @@
 </head>
 <body>
     <h1>USA Industries</h1>
-    <p>Current kill flag state: {{ kill_flag }}</p>
+
+    <h3>General Info:</h3>
+    <!--change to disabled or ENABLED--> 
+<pre>
+Kill flag state:        {{ kill_flag }} 
+Total gecs:             $100 morbillion 
+Average money gain/h:   $300K 
+Time until $1 billion:  3d
+</pre>
 
 
-    <h2>Usage Status:</h2>
-    {% for username, status in usage_status.items() %}
-        <p>{{ username }}: {{ status }}</p>
-    {% endfor %}
 
 </body>
 </html>
