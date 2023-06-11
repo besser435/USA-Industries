@@ -1,5 +1,5 @@
-import time, pydirectinput, mouse, keyboard, pytesseract, tempfile, os, getpass#,pyautogui
-import usa_secrets, requests
+import time, pydirectinput, mouse, keyboard, pytesseract, tempfile, os, getpass, requests, traceback#,pyautogui
+import usa_secrets
 from colorama import init
 init()
 from colorama import Fore
@@ -8,15 +8,16 @@ from PIL import Image, ImageGrab, ImageEnhance, ImageFilter
 from time import sleep
 # https://learncodebygaming.com/blog/pyautogui-not-working-use-directinput
 
-# time in seconds before pick refill. 4200 seems to be right for Unbreaking III
+# time in seconds before pick refill. 4200 seems to be right for Unbreaking III. 4100 to be safe.
 REFILL_DELAY = 4200
+username = usa_secrets.username
 app_server_ip = usa_secrets.app_server_ip
 abort_if_in_chat = usa_secrets.abort_if_in_chat
 override_abort = False
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 
-version = "1 billion gecs v1.3-beta.2"
+version = "1 billion gecs v1.3-beta.3"
 #TODO add decoy chat messages and random DC delay
 
 def refill_picks():
@@ -25,7 +26,7 @@ def refill_picks():
     sleep(2)
     pydirectinput.keyUp("s")
     pydirectinput.keyDown("d")
-    sleep(3)
+    sleep(5)
     pydirectinput.keyUp("d")
 
     # discard hotbar items
@@ -114,12 +115,39 @@ def read_chat():
     os.remove(temp_file_path) 
 
 
+def update_status(position, balance):
+    global username
+
+    if position == "start":
+        url = app_server_ip + "/client/start"
+    elif position == "stop":
+        url = app_server_ip + "/client/stop"
+
+    # Update the usage status on the USA server
+    data = {"username": username, "balance": balance, "position": position}  
+    response = requests.post(url, json=data)
+    if response.status_code == 200:
+        print("Usage status sent successfully.")
+    else:
+        print(Fore.RED + "Failed to send usage status.")
+
+    """# Example usage
+    start_bal = 100     # Replace with the actual current balance
+    end_bal = 200       # Replace with the actual current balance
+    update_status("start", start_bal)
+    update_status("stop", end_bal)"""
+
+
 def main():
     global override_abort
     refill_counter = 0
     try:
         print("Starting the money machine in 3 seconds...")
         sleep(3)
+
+
+        update_status("start", 100) # Replace with the actual current balance
+
 
         initial_time = time.monotonic()
         last_refill_time = initial_time
@@ -138,6 +166,9 @@ def main():
             "Time elsapsed:", round((time_stamp / 3600), 2), "hours    ",
             "Refilled", refill_counter, "times    "
             )
+
+            if override_abort:
+                print(Fore.YELLOW + f"WARN: Abort override: {override_abort}")
 
             #sleep(1)
 
@@ -186,7 +217,7 @@ def main():
                 refill_counter += 1
                 last_refill_time = current_time  
 
-            if keyboard.is_pressed("f10"):   # F10 to togggle whether to abort or not
+            if keyboard.is_pressed("f10"):  # F10 to togggle whether to abort or not
                 if override_abort == False:
                     print(Fore.YELLOW + "Enabled abort override. Will not close game when abort is triggered.")
                 else:
@@ -194,13 +225,12 @@ def main():
 
                 override_abort = not override_abort
 
-            if override_abort:
-                print(Fore.YELLOW + f"WARN: Override abort: {override_abort}")
-    
 
     except KeyboardInterrupt:
         pydirectinput.mouseUp()
         pydirectinput.keyUp("tab")
+
+        update_status("stop", 100) # Replace with the actual current balance
 
         print("Done Mining")
         print("Software version:", version)
@@ -209,6 +239,11 @@ def main():
         input("\nPress enter to exit...")
 
     except Exception as e:
-        print("Error:", e)
+        print(traceback.format_exc())
+        pydirectinput.mouseUp()
+        pydirectinput.keyUp("tab")
+
+        update_status("stop", 100) # Replace with the actual current balance
+        
         input("\nPress enter to exit...")
 main()
