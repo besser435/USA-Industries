@@ -3,32 +3,33 @@
 <head>
     <title>USA Industries</title>
     <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
-    <style>
-        body {
-            background-color: #212121;
-            color: #aeaeae;
-            font-family: Arial, sans-serif;
-            padding: 10px;
-        }
-
-        h1 {
-            margin-bottom: 10px;
-        }
-
-        p {
-            margin-top: 0;
-        }
-    </style>
+    <link rel="stylesheet" type="text/css" href="/static/styles.css">
 </head>
 <body>
     <h1>USA Industries</h1>
-    <p>Current kill flag state: {{ kill_flag }}</p>
+    <h2>General Info:</h2>
+    <!--change to disabled or ENABLED--> 
+<pre>
+Kill flag state:        {{ kill_flag }} 
+Total gecs:             $100 morbillion 
+Average money gain/h:   $300K 
+Average daily gain:     $2,000,420
+Time until $1 billion:  3d
+Time spent mining:      69h 69m
+</pre>
 
+    <h2>Server Info:</h2>
+<pre>
+Database size:          1.2 GB
+Uptime since restart:   1d 13h 3m
+</pre>
+<a href="/options">Go to Options</a>
 
-    <h2>Usage Status:</h2>
-    {% for username, status in usage_status.items() %}
-        <p>{{ username }}: {{ status }}</p>
-    {% endfor %}
+<h2>Usage Status:</h2>
+{% for username, status in usage_status.items() %}
+    <p>{{ username }}: {{ status }}</p>
+{% endfor %}
+
 
 </body>
 </html>
