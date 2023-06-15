@@ -30,7 +30,7 @@ override_abort = False
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 
-version = "v1.3-beta.4"
+version = "v1.3-beta.4.1"
 #TODO add decoy chat messages and random DC delay
 
 def refill_picks():
@@ -158,10 +158,8 @@ def update_status(position, balance):
 def script_updater():
     if update_on_close == True:
         script_dir = os.path.dirname(os.path.abspath(__file__))
-
-        #TODO update these links after directory structure is finalized
         update_files = [
-            #"https://raw.githubusercontent.com/besser435/USA-Industries/main/1%20billion%20gecs/1_billion_gecs.py",
+            "https://raw.githubusercontent.com/besser435/USA-Industries/main/1%20billion%20gecs/client/1_billion_gecs.py",
         ]
 
         try:
