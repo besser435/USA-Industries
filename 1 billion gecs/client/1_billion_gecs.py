@@ -1,5 +1,17 @@
-import time, pydirectinput, mouse, keyboard, pytesseract, tempfile, os, getpass, requests, traceback#,pyautogui
 import usa_secrets
+
+import time
+import pydirectinput
+import mouse
+import keyboard
+import pytesseract
+import tempfile
+import getpass
+import requests
+import traceback
+import urllib.request
+import os 
+import json
 from colorama import init
 init()
 from colorama import Fore
@@ -9,7 +21,8 @@ from time import sleep
 # https://learncodebygaming.com/blog/pyautogui-not-working-use-directinput
 
 # time in seconds before pick refill. 4200 seems to be right for Unbreaking III. 4100 to be safe.
-REFILL_DELAY = 4200
+REFILL_DELAY = 3900
+update_on_close = usa_secrets.update_on_close
 username = usa_secrets.username
 app_server_ip = usa_secrets.app_server_ip
 abort_if_in_chat = usa_secrets.abort_if_in_chat
@@ -17,7 +30,7 @@ override_abort = False
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 
-version = "1 billion gecs v1.3-beta.3"
+version = "v1.3-beta.4"
 #TODO add decoy chat messages and random DC delay
 
 def refill_picks():
@@ -124,7 +137,11 @@ def update_status(position, balance):
         url = app_server_ip + "/client/stop"
 
     # Update the usage status on the USA server
-    data = {"username": username, "balance": balance, "position": position}  
+    data = {"username": username, 
+            "balance": balance, 
+            "position": position, 
+            "version": version
+            }  
     response = requests.post(url, json=data)
     if response.status_code == 200:
         print("Usage status sent successfully.")
@@ -136,6 +153,29 @@ def update_status(position, balance):
     end_bal = 200       # Replace with the actual current balance
     update_status("start", start_bal)
     update_status("stop", end_bal)"""
+
+
+def script_updater():
+    if update_on_close == True:
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+
+        #TODO update these links after directory structure is finalized
+        update_files = [
+            #"https://raw.githubusercontent.com/besser435/USA-Industries/main/1%20billion%20gecs/1_billion_gecs.py",
+        ]
+
+        try:
+            print("Downloading update...")
+            updated_list = []
+            for file_name in update_files:
+                file_path = os.path.join(script_dir, file_name.split("/")[-1])  # Get the path with file name from the URL
+                urllib.request.urlretrieve(file_name, file_path)                # Download file from URL
+                
+                updated_list.append(file_name.split("/")[-1])                   # Get file name from URL
+        except:
+            print(Fore.LIGHTRED_EX + "Update download failed. Please manually update files")
+        else:
+            print("Updated: " + ", ".join(updated_list))
 
 
 def main():
@@ -225,25 +265,32 @@ def main():
 
                 override_abort = not override_abort
 
-
     except KeyboardInterrupt:
         pydirectinput.mouseUp()
         pydirectinput.keyUp("tab")
 
-        update_status("stop", 100) # Replace with the actual current balance
-
+        print()
         print("Done Mining")
         print("Software version:", version)
         print("Time elapsed:", round((time_stamp / 3600), 2), "hours")
         print("Refilled picks", refill_counter, "times")
-        input("\nPress enter to exit...")
+
+        print()
+        update_status("stop", 100) # Replace with the actual current balance
+        script_updater()
+        print()
+        
+        input("Press enter to exit...")
 
     except Exception as e:
-        print(traceback.format_exc())
+        print(Fore.LIGHTRED_EX + traceback.format_exc())
         pydirectinput.mouseUp()
         pydirectinput.keyUp("tab")
 
+        print()
         update_status("stop", 100) # Replace with the actual current balance
+        script_updater()
+        print()
         
-        input("\nPress enter to exit...")
+        input("Press enter to exit...")
 main()
