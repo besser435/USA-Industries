@@ -23,11 +23,11 @@
         </tr>
         <tr>
           <td>Total gecs:</td>
-          <td>$100 morbillion</td>
+          <td>${{ total_money }}</td>
         </tr>
         <tr>
           <td>Average daily gain:</td>
-          <td>$2,000,420</td>
+          <td>${{ total_money }}</td>
         </tr>
         <tr>
           <td>Time until $1 billion:</td>
@@ -50,7 +50,7 @@
 
 <h2>Usage Status:</h2>
 {% for username, data in usage_status.items() %}
-    <p>{{ username }}: <span style="font-weight: bold">{{ data.status }}</span> ({{ data.version }})</p>
+    <p>{{ username }}: <span style="font-weight: bold">{{ data.status }}</span> with {{ data.reloads }} reloads ({{ data.version }})</p>
 {% endfor %}
 
 
