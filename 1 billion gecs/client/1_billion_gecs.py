@@ -18,10 +18,11 @@ from colorama import Fore
 init(autoreset=True)
 from PIL import Image, ImageGrab, ImageEnhance, ImageFilter
 from time import sleep
+from datetime import datetime
 # https://learncodebygaming.com/blog/pyautogui-not-working-use-directinput
 
 # time in seconds before pick refill. 4200 seems to be right for Unbreaking III. 4100 to be safe.
-REFILL_DELAY = 3900
+REFILL_DELAY = 3700
 update_on_close = usa_secrets.update_on_close
 username = usa_secrets.username
 app_server_ip = usa_secrets.app_server_ip
@@ -30,7 +31,7 @@ override_abort = False
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 
-version = "v1.3-beta.4.1"
+version = "v1.3-beta.5"
 #TODO add decoy chat messages and random DC delay
 
 def refill_picks():
@@ -90,9 +91,9 @@ def abort():
         if response.status_code == 200:
             print("Kill flag updated successfully.")
         else:
-            print(Fore.LIGHTRED_EX + "Failed to update the kill flag on server. Other users may be affected.")
+            print(Fore.LIGHTRED_EX + "Failed to update the kill flag on the server. Other users may be affected.")
     except Exception:
-        print(Fore.LIGHTRED_EX + "Failed to update the kill flag on server. Other users may be affected.")
+        print(Fore.LIGHTRED_EX + "Failed to update the kill flag on the server. Other users may be affected.")
 
     print(Fore.LIGHTRED_EX + "Quit the game")
 
@@ -128,35 +129,33 @@ def read_chat():
     os.remove(temp_file_path) 
 
 
-def update_status(position, balance):
+def update_status(position):
     global username
 
-    if position == "start":
-        url = app_server_ip + "/client/start"
-    elif position == "stop":
-        url = app_server_ip + "/client/stop"
+    if position == "mining":
+        url = app_server_ip + "/client/mining"
+    elif position == "stop_mining":
+        url = app_server_ip + "/client/stop_mining"
 
     # Update the usage status on the USA server
-    data = {"username": username, 
-            "balance": balance, 
+    try:
+        data = {
+            "username": username, 
             "position": position, 
             "version": version
-            }  
-    response = requests.post(url, json=data)
-    if response.status_code == 200:
-        print("Usage status sent successfully.")
-    else:
-        print(Fore.RED + "Failed to send usage status.")
-
-    """# Example usage
-    start_bal = 100     # Replace with the actual current balance
-    end_bal = 200       # Replace with the actual current balance
-    update_status("start", start_bal)
-    update_status("stop", end_bal)"""
+        }  
+        response = requests.post(url, json=data)
+        if response.status_code == 200:
+            #print("Usage status sent successfully.")
+            pass
+        else:
+            print(Fore.RED + "Failed to send usage status.")
+    except Exception:
+        print(Fore.LIGHTRED_EX + "Failed to send usage status to the server.")
 
 
 def script_updater():
-    if update_on_close == True:
+    if update_on_close:
         script_dir = os.path.dirname(os.path.abspath(__file__))
         update_files = [
             "https://raw.githubusercontent.com/besser435/USA-Industries/main/1%20billion%20gecs/client/1_billion_gecs.py",
@@ -176,41 +175,59 @@ def script_updater():
             print("Updated: " + ", ".join(updated_list))
 
 
+def create_log():
+    data = {
+        "username": username,
+        "version": version,
+        "start_time": start_time,
+        #"end_time": end_time,
+        "start_balance": start_balance,
+        "end_balance": end_balance,
+        "refill_counter": refill_counter,
+    }
+
+
 def main():
     global override_abort
+    global start_time
+    global refill_counter
+    global start_balance
+    global end_balance
+    global time_stamp
+
     refill_counter = 0
     try:
+        start_balance = input("Enter the starting balance: ")
         print("Starting the money machine in 3 seconds...")
         sleep(3)
 
 
-        update_status("start", 100) # Replace with the actual current balance
-
-
         initial_time = time.monotonic()
         last_refill_time = initial_time
+        start_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")    # for json log
         while True: 
+            update_status("mining") # Replace with the actual current balance
             current_time = time.monotonic()
             time_stamp = current_time - initial_time + 1    # +1 to not trigger refill_picks() on the first loop
             time_since_refill = current_time - last_refill_time
+
 
             pydirectinput.mouseDown()
             mouse.wheel(-1)             # cycle through picks in hotbar
             pydirectinput.press("a")    # timeout prevention. Might cause times to be off by a second occasionally
             pydirectinput.keyDown("tab")
 
+
             print(
             "Refill in", int(REFILL_DELAY - time_since_refill), "seconds    ",
-            "Time elsapsed:", round((time_stamp / 3600), 2), "hours    ",
+            "Time elapsed:", round((time_stamp / 3600), 2), "hours    ",
             "Refilled", refill_counter, "times    "
             )
-
             if override_abort:
                 print(Fore.YELLOW + f"WARN: Abort override: {override_abort}")
 
-            #sleep(1)
 
-            # if 4000, refills picks every 1.11 hours (about the time a pick lasts)
+            # Refill picks after REFILL_DELAY seconds
             if time_since_refill >= REFILL_DELAY:
                 pydirectinput.mouseUp()
                 pydirectinput.keyUp("tab")
@@ -218,8 +235,11 @@ def main():
                 refill_counter += 1
                 last_refill_time = current_time  
             
+
+            # Look for abort strings in chat
             read_chat() 
         
+
             # Abort if the global kill flag is set to True
             try:
                 response = requests.get(app_server_ip + "/killflag")
@@ -230,10 +250,11 @@ def main():
                         abort()
                     raise KeyboardInterrupt
             except Exception:
-                print(Fore.LIGHTRED_EX + "Error connecting to USA Industries server. Will continue, but other users may be affected.")
+                print(Fore.LIGHTRED_EX + "Failed to request the kill flag on the server. Will continue, but other users may be affected.")
                 pass
 
 
+            # Keyboard shortcuts
             if keyboard.is_pressed("f7"):   # F7 to stop
                 raise KeyboardInterrupt
             pydirectinput.failSafeCheck()   # checks if mouse is in top left corner. If so, raises pydirectinput.FailSafeException and stops everything
@@ -255,7 +276,7 @@ def main():
                 refill_counter += 1
                 last_refill_time = current_time  
 
-            if keyboard.is_pressed("f10"):  # F10 to togggle whether to abort or not
+            if keyboard.is_pressed("f10"):  # F10 to toggle whether to abort or not
                 if override_abort == False:
                     print(Fore.YELLOW + "Enabled abort override. Will not close game when abort is triggered.")
                 else:
@@ -264,8 +285,14 @@ def main():
                 override_abort = not override_abort
 
     except KeyboardInterrupt:
+        global end_time
+        #end_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")    # for json log
         pydirectinput.mouseUp()
         pydirectinput.keyUp("tab")
+
+        print()
+        end_balance = input("Enter the ending balance: ")
+
 
         print()
         print("Done Mining")
@@ -274,19 +301,21 @@ def main():
         print("Refilled picks", refill_counter, "times")
 
         print()
-        update_status("stop", 100) # Replace with the actual current balance
+        update_status("stop_mining") # Replace with the actual current balance
         script_updater()
         print()
         
         input("Press enter to exit...")
 
     except Exception as e:
+        global end_time
         print(Fore.LIGHTRED_EX + traceback.format_exc())
+        #end_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")    # for json log
         pydirectinput.mouseUp()
         pydirectinput.keyUp("tab")
 
         print()
-        update_status("stop", 100) # Replace with the actual current balance
+        update_status("stop_mining") # Replace with the actual current balance
         script_updater()
         print()
         
