@@ -31,7 +31,7 @@ override_abort = False
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 
-version = "v1.3-beta.5"
+version = "v1.3-beta.6"
 #TODO add decoy chat messages and random DC delay
 
 def refill_picks():
@@ -142,14 +142,15 @@ def update_status(position):
         data = {
             "username": username, 
             "position": position, 
-            "version": version
+            "version": version,
+            "refills": refill_counter
         }  
         response = requests.post(url, json=data)
         if response.status_code == 200:
             #print("Usage status sent successfully.")
             pass
         else:
-            print(Fore.RED + "Failed to send usage status.")
+            print(Fore.LIGHTRED_EX + "Failed to send usage status.")
     except Exception:
         print(Fore.LIGHTRED_EX + "Failed to send usage status to the server.")
 
@@ -176,28 +177,45 @@ def script_updater():
 
 
 def create_log():
-    data = {
-        "username": username,
-        "version": version,
-        "start_time": start_time,
-        #"end_time": end_time,
-        "start_balance": start_balance,
-        "end_balance": end_balance,
-        "refill_counter": refill_counter,
-    }
+    try:
+        url = app_server_ip + "/client/session"
+        data = {
+            "username": username,
+            "version": version,
+
+            "start_time": start_time,
+            "end_time": end_time,
+
+            "start_balance": start_balance,
+            "end_balance": end_balance,
+
+            "refill_counter": refill_counter,
+        }
+        response = requests.post(url, json=data)
+        if response.status_code == 200:
+            #print("Usage status sent successfully.")
+            pass
+        else:
+            print(Fore.LIGHTRED_EX + "Failed to send mining session.")
+    except Exception:
+        print(Fore.LIGHTRED_EX + "Failed to send mining session to the server.")
 
 
 def main():
+    # prepare for autism
     global override_abort
     global start_time
     global refill_counter
     global start_balance
     global end_balance
     global time_stamp
+    global end_time
+    global refill_counter
 
     refill_counter = 0
     try:
-        start_balance = input("Enter the starting balance: ")
+        print(Fore.GREEN + "TODO clean user input. Make sure its an int or float, pop spaces and commas. Add local backup on exception")
+        start_balance = int(input(Fore.LIGHTMAGENTA_EX + "Enter the starting balance: " + Fore.RESET))
         print("Starting the money machine in 3 seconds...")
         sleep(3)
 
@@ -285,13 +303,13 @@ def main():
                 override_abort = not override_abort
 
     except KeyboardInterrupt:
-        global end_time
-        #end_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")    # for json log
+        end_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")    # for json log
         pydirectinput.mouseUp()
         pydirectinput.keyUp("tab")
 
         print()
-        end_balance = input("Enter the ending balance: ")
+        print(Fore.GREEN + "TODO clean user input. Make sure its an int or float, pop spaces and commas. Add local backup on exception")
+        end_balance = int(input(Fore.LIGHTMAGENTA_EX + "Enter the ending balance: "))
 
 
         print()
@@ -302,20 +320,22 @@ def main():
 
         print()
         update_status("stop_mining") # Replace with the actual current balance
+        create_log()
         script_updater()
         print()
         
         input("Press enter to exit...")
 
     except Exception as e:
-        global end_time
         print(Fore.LIGHTRED_EX + traceback.format_exc())
-        #end_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")    # for json log
+        end_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")    # for json log
         pydirectinput.mouseUp()
         pydirectinput.keyUp("tab")
 
+        end_balance = int(input(Fore.LIGHTMAGENTA_EX + "Enter the ending balance: "))
         print()
         update_status("stop_mining") # Replace with the actual current balance
+        create_log()
         script_updater()
         print()
         
