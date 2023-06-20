@@ -1,5 +1,4 @@
 import usa_secrets
-
 import time
 import pydirectinput
 import mouse
@@ -11,6 +10,7 @@ import requests
 import traceback
 import urllib.request
 import os 
+import re
 import json
 from colorama import init
 init()
@@ -28,11 +28,11 @@ username = usa_secrets.username
 app_server_ip = usa_secrets.app_server_ip
 abort_if_in_chat = usa_secrets.abort_if_in_chat
 override_abort = False
+#tesseract_path = usa_secrets.tesseract_path
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 
-version = "v1.3-beta.6"
-#TODO add decoy chat messages and random DC delay
+version = "v1.4"
 
 def refill_picks():
     # move to the dohickey
@@ -143,7 +143,7 @@ def update_status(position):
             "username": username, 
             "position": position, 
             "version": version,
-            "refills": refill_counter
+            "refill_counter": refill_counter
         }  
         response = requests.post(url, json=data)
         if response.status_code == 200:
@@ -201,6 +201,30 @@ def create_log():
         print(Fore.LIGHTRED_EX + "Failed to send mining session to the server.")
 
 
+def local_backup(data):
+    # Backup current data in case the Python script crashes or the server is down
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    backup_file = os.path.join(current_dir, "local_backup.txt") # Path to the backup file
+    time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    """
+    # Set the maximum number of lines allowed in the file. This is to prevent the file from getting too big
+    #max_lines = 32
+
+    # Delete lines if the file exceeds the maximum number of lines   
+    with open(backup_file, "r+") as f:
+        lines = f.readlines()
+        if len(lines) >= max_lines:
+            f.seek(0)
+            f.truncate()
+            f.writelines(lines[-(max_lines - 1):])
+    """
+    
+    # Write data and timestamp to the backup file
+    with open(backup_file, "a") as f:
+        f.write(f"{data}    {time}\n")
+
+
 def main():
     # prepare for autism
     global override_abort
@@ -210,12 +234,14 @@ def main():
     global end_balance
     global time_stamp
     global end_time
-    global refill_counter
 
     refill_counter = 0
     try:
-        print(Fore.GREEN + "TODO clean user input. Make sure its an int or float, pop spaces and commas. Add local backup on exception")
-        start_balance = int(input(Fore.LIGHTMAGENTA_EX + "Enter the starting balance: " + Fore.RESET))
+        unsanitzed_start_balance = input(Fore.LIGHTMAGENTA_EX + "Enter the starting balance: " + Fore.RESET)
+        start_balance = int(re.sub("[^0-9]", "", unsanitzed_start_balance)) # Scrub non-numeric characters
+        local_backup(f"start_balance {start_balance}")
+
+
         print("Starting the money machine in 3 seconds...")
         sleep(3)
 
@@ -308,12 +334,17 @@ def main():
         pydirectinput.keyUp("tab")
 
         print()
-        print(Fore.GREEN + "TODO clean user input. Make sure its an int or float, pop spaces and commas. Add local backup on exception")
-        end_balance = int(input(Fore.LIGHTMAGENTA_EX + "Enter the ending balance: "))
+        print("Start balance:", start_balance)
+        unsanitzed_end_balance = input(Fore.LIGHTMAGENTA_EX + "Enter the ending balance: " + Fore.RESET)
+        end_balance = int(re.sub("[^0-9]", "", unsanitzed_end_balance)) # Scrub non-numeric characters
 
 
-        print()
+        local_backup(f"end_balance {end_balance}")
+
+        formatted_money = "{:,}".format(end_balance - start_balance)
         print("Done Mining")
+        print("Money made: $" + str(formatted_money))
+        print("Money per hour: $" + str(round(((end_balance - start_balance) / (time_stamp / 3600)), 2)))
         print("Software version:", version)
         print("Time elapsed:", round((time_stamp / 3600), 2), "hours")
         print("Refilled picks", refill_counter, "times")
@@ -332,8 +363,12 @@ def main():
         pydirectinput.mouseUp()
         pydirectinput.keyUp("tab")
 
-        end_balance = int(input(Fore.LIGHTMAGENTA_EX + "Enter the ending balance: "))
+        print("Start balance:", start_balance)
+        unsanitzed_end_balance = input(Fore.LIGHTMAGENTA_EX + "Enter the ending balance: " + Fore.RESET)
+        end_balance = int(re.sub("[^0-9]", "", unsanitzed_end_balance)) # Scrub non-numeric characters
+        local_backup(f"end_balance {end_balance}")
         print()
+
         update_status("stop_mining") # Replace with the actual current balance
         create_log()
         script_updater()
