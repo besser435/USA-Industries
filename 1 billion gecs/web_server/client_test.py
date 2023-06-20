@@ -21,12 +21,12 @@ kill_flag = response.text
 print(kill_flag)
 """
 
-version = "v1.3-beta.6"
-username = "testuser"
-reloads = 69
+version = "v1.4"
+username = "brandonusa"
+refill_counter = 20
 app_server_ip = "http://72.200.111.73:5000"
 
-def update_status(position):
+"""def update_status(position):
     global username
 
     if position == "mining":
@@ -40,7 +40,7 @@ def update_status(position):
             "username": username, 
             "position": position, 
             "version": version,
-            "reloads": reloads
+            "refill_counter": refill_counter
         }  
         response = requests.post(url, json=data)
         if response.status_code == 200:
@@ -52,12 +52,15 @@ def update_status(position):
         print("Failed to send usage status to the server.")
 
     
-#update_status("mining")
-#time.sleep(5)
-#update_status("stop_mining")
+update_status("mining")
+time.sleep(5)
+update_status("stop_mining")
+"""
+
+
 
 start_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-time.sleep(1)
+time.sleep(2)
 end_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 def create_log():
@@ -70,18 +73,18 @@ def create_log():
             "start_time": start_time,
             "end_time": end_time,
 
-            "start_balance": 50,
-            "end_balance": 100,
+            "start_balance": 0,
+            "end_balance": 200,
 
-            "refill_counter": 69,
+            "refill_counter": refill_counter,
         }
         response = requests.post(url, json=data)
         if response.status_code == 200:
             #print("Usage status sent successfully.")
             pass
         else:
-            print("Failed to send session log.")
+            print("Failed to send mining session.")
     except Exception:
-        print("Failed to send session log to the server.")
+        print("Failed to send mining session to the server.")
 
 create_log()

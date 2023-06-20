@@ -3,7 +3,8 @@
 <head>
     <title>1 billion gecs</title>
     <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
-    <link rel="stylesheet" type="text/css" href="/static/styles.css"> <!-- t-there!! i linked the stylesheet for you, but d-dont think that i, l-like you or anything, BAKA! ~>_<~ -->
+    <link rel="stylesheet" type="text/css" href="/static/styles.css"> 
+    <!-- t-there!! i linked the stylesheet for you, but d-dont think that i, l-like you or anything, BAKA! ~>_<~ -->
 </head>
 <style>
     table, th, td {
@@ -50,7 +51,7 @@
 
 <h2>Usage Status:</h2>
 {% for username, data in usage_status.items() %}
-    <p>{{ username }}: <span style="font-weight: bold">{{ data.status }}</span> with {{ data.reloads }} reloads ({{ data.version }})</p>
+    <p>{{ username }}: <span style="font-weight: bold">{{ data.status }}</span> with {{ data.refill_counter }} reloads ({{ data.version }})</p>
 {% endfor %}
 
 

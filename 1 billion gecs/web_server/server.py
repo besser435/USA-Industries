@@ -11,8 +11,147 @@ kill_flag = False
 usage_status = {}
 
 
-def process_metadata():
-    pass
+"""def update_metadata(username):
+    total_money = calculate_total_money(username)
+    average_daily_gain = calculate_average_daily_gain(username)
+    time_spent_mining = calculate_time_spent_mining(username)
+    mining_sessions = calculate_mining_sessions(username)
+
+    metadata = {
+        "username": username,
+        "total_money": total_money,
+        "average_daily_gain": average_daily_gain,
+        "time_spent_mining": time_spent_mining,
+        "mining_sessions": mining_sessions
+    }
+
+    # Get the directory of the current script
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+
+    # Create the subdirectory within the script directory
+    subdirectory = "user_sessions"
+    directory = os.path.join(script_dir, subdirectory, username)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+    # Write the metadata to a file within the subdirectory
+    filepath = os.path.join(directory, "metadata.json")
+    with open(filepath, "w") as file:
+        json.dump(metadata, file)
+
+    print(f"Metadata updated for user: {username}")"""
+def update_all_metadata():
+    metadata_dir = "user_sessions"
+    
+    for root, dirs, files in os.walk(metadata_dir):
+        for file in files:
+            if file.endswith("metadata.json"):
+                filepath = os.path.join(root, file)
+                with open(filepath, "r") as f:
+                    metadata = json.load(f)
+                
+                username = metadata["username"]
+                metadata_filename = f"{username}_metadata.json"
+                metadata_filepath = os.path.join(root, metadata_filename)
+                
+                # Update the metadata fields as needed
+                metadata["total_money"] = calculate_total_money(username)
+                metadata["average_daily_gain"] = calculate_average_daily_gain(username)
+                metadata["time_spent_mining"] = calculate_time_spent_mining(username)
+                metadata["mining_sessions"] = calculate_mining_sessions(username)
+                
+                with open(metadata_filepath, "w") as f:
+                    json.dump(metadata, f, indent=4)
+                    
+                print(f"Updated metadata file: {metadata_filepath}")
+
+
+def calculate_total_money(username):
+    latest_session_file = get_latest_session_file(username)
+    if latest_session_file is None:
+        return 0
+
+    filepath = os.path.join("user_sessions", username, latest_session_file)
+    with open(filepath) as file:
+        data = json.load(file)
+        end_balance = data["end_balance"]
+
+    return end_balance
+
+
+def get_latest_session_file(username):
+    directory = os.path.join("user_sessions", username)
+    session_files = []
+    for root, dirs, files in os.walk(directory):
+        for file in files:
+            if file.endswith("session.json"):
+                session_files.append(file)
+
+    if not session_files:
+        return None
+
+    latest_session_file = max(session_files)
+    return latest_session_file
+
+
+def calculate_average_daily_gain(username):
+    total_money = calculate_total_money(username)
+    time_spent_mining = calculate_time_spent_mining(username)
+    days = time_spent_mining / (24 * 60 * 60)  # Convert time spent mining to days
+    average_daily_gain = total_money / days
+    return average_daily_gain
+
+
+def calculate_time_spent_mining(username):
+    time_spent_mining = 0
+    directory = os.path.join("user_sessions", username)
+    for root, dirs, files in os.walk(directory):
+        for file in files:
+            if file.endswith("session.json"):
+                filepath = os.path.join(root, file)
+                with open(filepath) as f:
+                    data = json.load(f)
+                    start_time = datetime.datetime.strptime(data["start_time"], "%Y-%m-%d %H:%M:%S")
+                    end_time = datetime.datetime.strptime(data["end_time"], "%Y-%m-%d %H:%M:%S")
+                    duration = end_time - start_time
+                    time_spent_mining += duration.total_seconds()
+    return time_spent_mining
+
+
+def calculate_mining_sessions(username):
+    directory = os.path.join("user_sessions", username)
+    session_count = 0
+    for root, dirs, files in os.walk(directory):
+        for file in files:
+            if file.endswith("session.json"):
+                session_count += 1
+    return session_count
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 def get_total_money():
@@ -68,6 +207,7 @@ def hello():
     folder_size_kb = get_folder_size("user_sessions")
     server_uptime = get_server_uptime()
     total_money  = get_total_money()
+    update_all_metadata()
 
     return render_template(
         "home.html", 
@@ -76,6 +216,7 @@ def hello():
         folder_size_kb=folder_size_kb,
         server_uptime=server_uptime,
         total_money=total_money
+
     )
 # Server options page
 @app.route("/options")
@@ -109,19 +250,17 @@ def toggle_kill_flag():
     return redirect(url_for("options"))
 
 
-
-
 # Update usage status
 # called by update_status() in 1bg.py
 @app.route("/client/mining", methods=["POST"])
 def start_usage():
     username = request.json.get("username")  # Retrieve the username from the request payload
     version = request.json.get("version")
-    reloads = request.json.get("reloads")
+    refill_counter = request.json.get("refill_counter")
     if username:
         usage_status[username] = {"status": "Currently farming", 
                                   "version": version, 
-                                  "reloads": reloads}
+                                  "refill_counter": refill_counter}
         return "Usage status received for username: {} (version {})".format(username, version)
     else:
         return "Username not provided.", 400  # Return an appropriate error response if username is not provided
@@ -146,7 +285,7 @@ def store_session_data():
     username = session_data["username"]
     start_time = session_data["start_time"] 
     end_time = session_data["end_time"] 
-    filename = f"{username}_{start_time}___{end_time}_session_.json"
+    filename = f"{username}_{start_time}___{end_time}_session.json"
 
     # Get the directory of the current script
     script_dir = os.path.dirname(os.path.abspath(__file__))
