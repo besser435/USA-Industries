@@ -21,8 +21,8 @@ from time import sleep
 from datetime import datetime
 # https://learncodebygaming.com/blog/pyautogui-not-working-use-directinput
 
-# time in seconds before pick refill. 4200 seems to be right for Unbreaking III. 4100 to be safe.
-REFILL_DELAY = 3700
+# time in seconds before pick refill
+REFILL_DELAY = 3760
 update_on_close = usa_secrets.update_on_close
 username = usa_secrets.username
 app_server_ip = usa_secrets.app_server_ip
@@ -32,7 +32,7 @@ override_abort = False
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 
-version = "v1.4"
+version = "v1.4.1"
 
 def refill_picks():
     # move to the dohickey
@@ -219,7 +219,7 @@ def local_backup(data):
             f.truncate()
             f.writelines(lines[-(max_lines - 1):])
     """
-    
+
     # Write data and timestamp to the backup file
     with open(backup_file, "a") as f:
         f.write(f"{data}    {time}\n")
@@ -237,6 +237,7 @@ def main():
 
     refill_counter = 0
     try:
+        print(f"1 billion gecs {version}")
         unsanitzed_start_balance = input(Fore.LIGHTMAGENTA_EX + "Enter the starting balance: " + Fore.RESET)
         start_balance = int(re.sub("[^0-9]", "", unsanitzed_start_balance)) # Scrub non-numeric characters
         local_backup(f"start_balance {start_balance}")
@@ -337,17 +338,14 @@ def main():
         print("Start balance:", start_balance)
         unsanitzed_end_balance = input(Fore.LIGHTMAGENTA_EX + "Enter the ending balance: " + Fore.RESET)
         end_balance = int(re.sub("[^0-9]", "", unsanitzed_end_balance)) # Scrub non-numeric characters
-
-
         local_backup(f"end_balance {end_balance}")
 
-        formatted_money = "{:,}".format(end_balance - start_balance)
         print("Done Mining")
-        print("Money made: $" + str(formatted_money))
-        print("Money per hour: $" + str(round(((end_balance - start_balance) / (time_stamp / 3600)), 2)))
-        print("Software version:", version)
+        print("Money made: $" + str("{:,.0f}".format(end_balance - start_balance)))
+        print("Money per hour: $" + str("{:,.0f}".format((end_balance - start_balance) / (time_stamp / 3600))))
         print("Time elapsed:", round((time_stamp / 3600), 2), "hours")
         print("Refilled picks", refill_counter, "times")
+        print("Software version:", version)
 
         print()
         update_status("stop_mining") # Replace with the actual current balance
