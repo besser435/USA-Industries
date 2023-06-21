@@ -33,7 +33,7 @@ override_abort = False
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 
-version = "v1.4.3"
+version = "v1.4.4"
 
 def refill_picks():
     # move to the dohickey
@@ -244,7 +244,7 @@ def main():
         local_backup(f"start_balance {start_balance}")
 
 
-        print("Starting the money machine in 3 seconds...")
+        print(f"Starting the money machine in {start_delay} seconds...")
         sleep(start_delay)
 
 
@@ -265,7 +265,7 @@ def main():
 
 
             print(
-            "Refill in", int(REFILL_DELAY - time_since_refill), "seconds    ",
+            "Refill in", int(refill_delay - time_since_refill), "seconds    ",
             "Time elapsed:", round((time_stamp / 3600), 2), "hours    ",
             "Refilled", refill_counter, "times    "
             )
@@ -273,8 +273,8 @@ def main():
                 print(Fore.YELLOW + f"WARN: Abort override: {override_abort}")
 
 
-            # Refill picks after REFILL_DELAY seconds
-            if time_since_refill >= REFILL_DELAY:
+            # Refill picks after refill_delay seconds
+            if time_since_refill >= refill_delay:
                 pydirectinput.mouseUp()
                 pydirectinput.keyUp("tab")
                 refill_picks()
