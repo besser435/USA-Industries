@@ -22,17 +22,18 @@ from datetime import datetime
 # https://learncodebygaming.com/blog/pyautogui-not-working-use-directinput
 
 # time in seconds before pick refill
-REFILL_DELAY = 3760
+refill_delay = usa_secrets.refill_delay
 update_on_close = usa_secrets.update_on_close
 username = usa_secrets.username
 app_server_ip = usa_secrets.app_server_ip
 abort_if_in_chat = usa_secrets.abort_if_in_chat
+start_delay = usa_secrets.start_delay
 override_abort = False
 #tesseract_path = usa_secrets.tesseract_path
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 
-version = "v1.4.1"
+version = "v1.4.2"
 
 def refill_picks():
     # move to the dohickey
@@ -244,7 +245,7 @@ def main():
 
 
         print("Starting the money machine in 3 seconds...")
-        sleep(3)
+        sleep(start_delay)
 
 
         initial_time = time.monotonic()
